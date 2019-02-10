@@ -58,7 +58,14 @@ svg text.label {
   left: 0;
 }
 
-.container {
+.barContainer {
+  box-shadow: 8px 8px 8px 8px rgba(0, 0, 0, 0.2);
+  max-width: 880px;
+  margin: "auto";
+  padding-left: 28px;
+}
+
+.scatterplotContainer {
   box-shadow: 8px 8px 8px 8px rgba(0, 0, 0, 0.2);
   max-width: 880px;
   margin: "auto";

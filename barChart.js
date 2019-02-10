@@ -363,7 +363,7 @@ const xAxis = d3
 const yAxis = d3.axisLeft().scale(yScale);
 
 const svg = d3
-  .select(".container")
+  .select(".barChartContainer")
   .append("svg")
   .attr("width", svgWidth + margin.left + margin.right)
   .attr("height", height + margin.top + margin.bottom)
