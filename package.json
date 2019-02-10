@@ -5,12 +5,16 @@
   "main": "barChart.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "./node_modules/nodemon/bin/nodemon.js index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "node-static": "^0.7.11"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.10"
   }
 }
