@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>FCC Data Viz Challenges</title>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="styles/scatterplot_styles.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300|Open+Sans"
+      rel="stylesheet"
+      type="text/css"
+    />
+  </head>
+
+  <body>
+    <div><h1>Quick Test</h1></div>
+    <h3 id="title" class="scatterPlotChart">Scatterplot Chart</h3>
+    <div class="legend"></div>
+    <div class="scatterPlotChartContainer"></div>
+    <!-- <div class="scatterplotContainer"></div> -->
+    <!-- <svg id="scatterPlotChart" width="1024" height="500"></svg> -->
+
+    <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script>
+      d3.select("h3.scatterPlotChart").style("color", "blue");
+      d3.select("h3.scatterPlotChart").style("font-size", "24px");
+    </script>
+    <script src="scatterPlotChart.js"></script>
+  </body>
+</html>
