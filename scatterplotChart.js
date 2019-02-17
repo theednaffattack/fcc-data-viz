@@ -388,7 +388,7 @@ const margin = {
   right: 40,
   top: 40,
   bottom: 40
-};
+}; 
 
 const height = 700 - margin.top - margin.bottom
 const width = 800 - margin.left - margin.right
