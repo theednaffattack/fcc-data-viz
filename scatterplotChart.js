@@ -366,6 +366,7 @@ let = local_scatterplot_data = [
 ];
 
 
+var colorScale = d3.scaleOrdinal(d3["schemeCategory10"])
 
 var scatterplotHeight = 300;
 
@@ -389,7 +390,7 @@ const margin = {
   bottom: 40
 };
 
-const height = 800 - margin.top - margin.bottom
+const height = 700 - margin.top - margin.bottom
 const width = 800 - margin.left - margin.right
 
 
@@ -506,7 +507,7 @@ const scatterplot2 = d3
   .data(local_scatterplot_data) // bind the data? append the data?
   .enter() // enter this to the DOM
   .append("circle") // append our data as rects
-  .attr("r", d =>  5) // radius
+  .attr("r", d =>  8) // radius
   .attr("cx", d => {
     return xMap(d.Year);
   }) // circumference? x value
@@ -520,10 +521,24 @@ const scatterplot2 = d3
   )
   .attr("data-date", d => d["Time"])
   .attr("data-gdp", d => d["Year"])
-  .attr("fill", d => (d["Year"] === 120 ? "crimson" : "palevioletred"))
+  .attr("fill", d => (d["Doping"] !== "" ? colorScale(4) : colorScale(5)))
   .attr("transform", "translate(" + [margin.left, margin.top] + ")") // make room for y-axis
   .on("mouseover", tipMouseover)
   .on("mouseout", tipMouseout);
+
+
+
+
+console.log("colorScale")
+console.log(colorScale(4))
+console.log(colorScale(5))
+console.log(colorScale(6))
+console.log(colorScale(7))
+  
+  
+  
+  
+  
 //   xScale.domain(local_scatterplot_data.map(d => d));
 // yScale.domain([0, d3.max(local_scatterplot_data, d => d.quantity)]);
 // .attr("transform", function(d, i) {
@@ -533,45 +548,45 @@ const scatterplot2 = d3
 const legendVals = ["Riders with no doping allegation", "Doping allegations"]
 
 
-const svgLegend = d3
-.select(".legend")
-.append("svg")
-.attr("width", 500)
-.attr("height", 100)
-.attr("class", "legend");
+// const svgLegend = svg
+// .selectAll(".legend")
+// .append("g")
+// .attr("width", 500)
+// .attr("height", 100)
+// .attr("class", "legend");
 
 
 
 
-const legend = svgLegend.selectAll(".legend")
+const legend = svg.selectAll(".legend")
 .data(legendVals)
 .enter()
 .append("g")
 .attr("class", "legend")
-.attr("transform", function(d,i) { "translate(0,0)"});
+.attr("id", "legend")
+.attr("transform", `translate(0,${height / 3})`);
 
 
 legend.append("rect")
-.attr("x", 0)
-.attr("y", 0)
+.attr("x",  width -18)
+.attr("y",  (d, i) => i * 20)
 .attr("class", "legend")
 .attr("id", "legend")
-.attr("x", 0)
-.attr("y", 0)
-.attr("width", 10)
-.attr("height", 10)
+.attr("width", 18)
+.attr("height", 18)
 .style("fill", function(d, i) {
-  return "pink"
+  return d === "Doping allegations" ? colorScale(4) : colorScale(5)
 });
 
 legend.append("text")
-.attr("x", 20)
-.attr("y", 10)
+.attr("x", width - 30)
+.attr("y", (d, i) => i * 20)
 .text(function(d, i){
   return d
 })
+
 .attr("class", "textselected")
-.style("text-anchor", "start")
+.style("text-anchor", "end")
 .style("font-size", 15)
 
 // ==========================================
