@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FCC Dataviz: Chloropleth Map</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="./styles/chloropleth_styles.css"
+    />
+  </head>
+  <body>
+    <h1 id="title">Where the smarties live</h1>
+    <div id="description">
+      Percentage of adults age 25 and older with a bachelor's degree or higher
+      (2010-2014)
+    </div>
+    <div class="chloropleth_container"></div>
+    <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <!-- <script src="https://d3js.org/d3.v5.min.js"></script> -->
+    <script src="https://d3js.org/topojson.v2.min.js"></script>
+
+    <script src="https://d3js.org/d3-scale.v2.min.js"></script>
+    <script src="http://d3js.org/queue.v1.min.js"></script>
+    <script src="https://d3js.org/d3-color.v1.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <script>
+      const format = d3.format("");
+      let formatLegendNumber = d3.format(".0f");
+      var path = d3.geoPath();
+
+      const height = 600;
+      const width = 960;
+
+      const margin = {
+        top: 40,
+        right: 40,
+        bottom: 40,
+        left: 40
+      };
+      // d3 chloropleth instructions from: https://bl.ocks.org/denisemauldin/98077edcf2c6fba9f1b5876f9eb16642
+      var svg = d3
+        .select(".chloropleth_container")
+        .append("svg")
+        .attr("height", height + margin.top + margin.bottom)
+        .attr("width", width + margin.left + margin.right)
+        .attr("id", "chloropleth")
+        .append("g")
+        .attr("transform", "translate(" + [margin.left, margin.top] + ")");
+      // https://blockbuilder.org/john-guerra/a75733ba5767813d4f31026d1d5e6244
+
+      const purples = d3.scaleOrdinal(d3.schemePurples[4]);
+      //   var colorScale = d3.scaleOrdinal(d3["schemePurples[5]"]);
+
+      // load the data files below and
+      // wait to draw the map before doing anything else
+      queue()
+        .defer(d3.json, "data/counties.json")
+        .defer(d3.json, "data/for_user_education.json")
+        .await(makeMyMap);
+
+      // d3 queue instructions from: http://bl.ocks.org/mapsam/6090056
+      function makeMyMap(error, us, education) {
+        if (error) throw error;
+        // let's take a look at the keys step by step until
+        // we see geo shapes... looks like at `us.objects`
+        // console.log(Object.keys(us.objects.counties)); // => type, geometries
+        // console.log(us.objects.counties.geometries); // => 3,142 arrays with {type: "Polygon", id: 5089, arcs: Array(1)} inside
+        // console.log(
+        //   us.objects.counties.geometries.map(countyShape => countyShape.id)
+        // ); // => an array(3,142) with each county id
+
+        const legendExtent = d3.extent(education, d => d.bachelorsOrHigher);
+
+        const color = d3
+          .scaleQuantize()
+          .domain(legendExtent)
+          .range(d3.schemePurples[4]);
+
+        const x = d3
+          .scaleLinear()
+          .domain(d3.extent(color.domain()))
+          .rangeRound([0, 260]);
+
+        const tooltip = d3
+          .select(".chloropleth_container")
+          .append("div")
+          .attr("class", "tooltip")
+          .style("opacity", 0);
+
+        // tooltip mouseover event handler
+        const tipMouseover = function(d) {
+          let educationDataObj = education.filter(item => item.fips === d.id);
+          const html = `<div id='tooltip' style='background-color: seashell; padding: 8px; font-size: 16px;'>${
+            educationDataObj[0].area_name
+          }, ${
+            educationDataObj[0].state
+          }&nbsp;&nbsp;<b><span style='color: crimson;'>${
+            educationDataObj[0].bachelorsOrHigher
+          }</span></b></div>`;
+          console.log(educationDataObj[0].bachelorsOrHigher);
+          tooltip
+            .html(html)
+            .style("left", d3.event.pageX + 15 + "px")
+            .style("top", d3.event.pageY - 28 + "px")
+            .attr("class", "tooltip")
+            .attr("id", "tooltip")
+            .attr("data-education", educationDataObj[0].bachelorsOrHigher)
+            .transition()
+            .duration(200) // ms
+            .style("opacity", 0.9); // started as 0!
+        };
+
+        // tooltip mouseout event handler
+        var tipMouseout = function(d) {
+          tooltip
+            .transition()
+            .duration(300) // ms
+            .style("opacity", 0); // don't care about position!
+        };
+
+        svg
+          .append("g")
+          .attr("class", "counties") // give `g` shapes the class `counties` for cssstyling
+          .selectAll("path") // select all the paths within class counties (which don't exist yet)
+          .data(topojson.feature(us, us.objects.counties).features)
+          .enter()
+          .append("path")
+          .attr("class", "county")
+          .attr("data-fips", d => d.id)
+          .attr(
+            "data-education",
+            d =>
+              education.filter(edObj => edObj.fips === d.id)[0]
+                .bachelorsOrHigher
+          )
+          .attr("d", path)
+          .attr("fill", function(d) {
+            var result = education.filter(function(obj) {
+              return obj.fips == d.id;
+            });
+            if (result[0]) {
+              return color(result[0].bachelorsOrHigher);
+            }
+            // data is missing, no fips marched the data id
+            return color(0);
+          })
+          //   .style("fill", function(d, i) {
+          //     // return colorScale(i);
+          //     let getVal = education
+          //       .filter(obj => obj.fips === d.id)
+          //       .map(final => final.bachelorsOrHigher)[0];
+
+          //     // console.log("getVal");
+          //     // console.log(getVal);
+
+          //     // console.log("purples(getVal)");
+          //     // console.log(purples(getVal));
+          //     console.log("shapes purples(x(getVal))");
+          //     console.log(getVal);
+          //     console.log(x(getVal));
+          //     console.log(purples(x(getVal)));
+
+          //     return purples(x(getVal));
+          //   })
+          .on("mouseover", tipMouseover)
+          .on("mouseout", tipMouseout);
+
+        // attach legend
+        // svg.append("g").attr("transform", "translate(600, 0)");
+        //   .call(newLegend);
+
+        // svg.selectAll(".counties")
+        // .data(education.)
+
+        // add hover and click events
+        // with mousedown and mouseup, which are brand new to me
+        // let hoverEnabled = false;
+        // svg
+        //   .on("mousedown", x => (hoverEnabled = true)) // add a mousedown event
+        //   .on("mouseup", x => (hoverEnabled = false));
+
+        // // select all paths of class county and add this mouseover event
+        // // add class hovered to anything "hoverEnabled"
+        // svg.selectAll(".counties path").on("mouseover", function() {
+        //   if (hoverEnabled) {
+        //     this.classList.add("hovered"); // give this styling in your css sheet
+        //   }
+        // });
+
+        // svg
+        //   .append("path")
+        //   .attr("class", "county-borders")
+        //   .attr(
+        //     "d",
+        //     path(
+        //       topojson.mesh(us, us.objects.counties, function(a, b) {
+        //         return a !== b;
+        //       })
+        //     )
+        //   );
+
+        const legendVals = ["one", "two", "three", "four"];
+
+        console.log(color.domain());
+
+        const legend = svg
+          .selectAll(".legend")
+          .data(color.range().map(d => color.invertExtent(d)))
+          .enter()
+          .append("g")
+          .attr("class", "legend")
+          .attr("id", "legend")
+          .attr("transform", `translate(0,0)`);
+
+        legend
+          .append("rect")
+          .attr("x", (d, i) => width - 60 - i * (x(d[1]) - x(d[0])))
+          .attr("y", 0)
+          .attr("class", "legend")
+          .attr("id", "legend")
+          .attr("width", d => {
+            let getVal = education.filter(obj => obj.fips === d.id);
+            //   .map(final => final.bachelorsOrHigher)[0];
+
+            // console.log("getVal");
+            // console.log(getVal);
+
+            // console.log("purples(getVal)");
+            // console.log(purples(getVal));
+            console.log("what is d and x?");
+            console.log(d[1]);
+            console.log(x(d[1]));
+            console.log(purples(x(d[1])));
+
+            return x(d[1]) - x(d[0]);
+          })
+          .attr("height", 18)
+          .style("fill", (d, i) => color.range()[i]);
+
+        const lowToHighQuantizedInvertedExtents = color
+          .range()
+          .map(d => color.invertExtent(d));
+
+        const lightToDarkColorScale = color
+          .range()
+          .map((d, i) => color.range()[i]);
+
+        console.log("INVERT TEXT VALUES");
+        // console.log(color.range().map(d => color.invertExtent(d)));
+        // console.log(color.range().map((d, i) => color.range()[i]));
+
+        console.log(lowToHighQuantizedInvertedExtents);
+        console.log(lightToDarkColorScale);
+
+        console.log("COLOR RANGE");
+        console.log(color.range()[1]);
+        legend
+          .append("text")
+          //   .attr("x", x.range()[0])
+          .attr(
+            "x",
+            (d, i) => width - (x(d[1]) - x(d[0])) / 4 - i * (x(d[1]) - x(d[0]))
+          )
+
+          //   .attr("x", (d, i) => width - 18 + i * 30)
+          .attr("y", 36)
+          .style("color", "white")
+          .text(function(d, i) {
+            let tempVal = d.map(num => {
+              return Math.round(num);
+            });
+            return tempVal[0] + " - " + tempVal[1] + "%";
+          })
+
+          .attr("class", "textselected")
+          .style("text-anchor", "end")
+          //   .style("fill", "pink")
+          .style("font-size", 15);
+
+        // // const newLegend = g => {
+        // //   const x = d3
+        // //     .scaleLinear()
+        // //     .domain(d3.extent(color.domain()))
+        // //     .rangeRound([0, 260]);
+
+        // //   g.selectAll("rect")
+        // //     .data(color.range().map(d => color.invertExtent(d)))
+        // //     //   .join("rect")
+        // //     .attr("height", 8)
+        // //     .attr("width", d => x(d[1]) - x(d[0]))
+        // //     .attr("fill", d => color(d[0]));
+
+        // //   g.append("text")
+        // //     .attr("class", "caption")
+        // //     .attr("x", x.range()[0])
+        // //     .attr("y", -6)
+        // //     .attr("fill", "#000")
+        // //     .attr("text-anchor", "start")
+        // //     .attr("font-weight", "bold")
+        // //     .text("College education by county");
+
+        //   //   g.call(
+        //   //     d3
+        //   //       .axisBottom(x)
+        //   //       .tickSize(13)
+        //   //       .tickFormat(format)
+        //   //       .tickValues(
+        //   //         color
+        //   //           .range()
+        //   //           .slice(1)
+        //   //           .map(d => color.invertExtent(d)[0])
+        //   //       )
+        //   //   )
+        //   //     .select(".domain")
+        //   //     .remove();
+        // };
+      }
+    </script>
+  </body>
+</html>
